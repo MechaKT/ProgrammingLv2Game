@@ -57,6 +57,14 @@ class Enemy(pygame.sprite.Sprite):
 
         self.rect = self.image.get_rect()
 
+class Pbullet(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        
+        self.image = pygame.Surface((10,40))
+        self.image.fill(YELLOW)
+        
+        self.rect = self.image.get_rect()
 
 
 def main():
@@ -83,6 +91,9 @@ def main():
     all_sprites.add(player)
     player.rect.y = 600
     player.rect.x = 350
+    
+    pbullet = Pbullet()
+    all_sprites.add(pbullet)
     # ----- MAIN LOOP
     while not done:
         # -- Event Handler
@@ -100,7 +111,10 @@ def main():
             player.move_up()
         if keys[pygame.K_DOWN]:
             player.move_down()
-
+        
+        # Shoot
+        # if keys[pygame.K_Z]:
+            
 
 
         # ----- LOGIC
