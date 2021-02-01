@@ -16,6 +16,8 @@ enemy_sprites = pygame.sprite.Group()
 bullet_sprites = pygame.sprite.Group()
 ebullet_sprites = pygame.sprite.Group()
 
+# Calculates time between shots
+tick = 0
 
 class Player(pygame.sprite.Sprite):
     def __init__(self):
@@ -99,9 +101,7 @@ class Ebullet(pygame.sprite.Sprite):
         self.posx = self.rect.centerx
         self.posy = self.rect.centery
 
-
         self.rect.center = coords
-
 
     def update(self):
         self.posx += self.speedx
@@ -110,6 +110,21 @@ class Ebullet(pygame.sprite.Sprite):
         if (self.rect.right > WIDTH or self.rect.left < 0 or self.rect.bottom > HEIGHT or self.rect.top<0):
             self.kill()
 
+class Gen_bullet(pygame.sprite.Sprite):
+    def __init__(self, coords):
+        super().__init__()
+
+        self.image = pygame.Surface((20,20))
+        self.image.fill((255,255,0))
+
+        self.rect = self.image.get_rect()
+        self.rect.center = coords
+
+
+        self.velocity = 5
+
+    def update(self):
+        self.rect.y += self.velocity
 # Boss hp
 hp = 1000
 # Player lives
@@ -144,7 +159,7 @@ def main():
     pbullet = Pbullet(player.rect.midtop)
     all_sprites.add(pbullet)
 
-
+    tick = 0
 
     # ----- MAIN LOOP
     while not done:
@@ -176,6 +191,12 @@ def main():
                 ebullet_sprites.add(bullet)
                 all_sprites.add(bullet)
 
+            gen_bullet = Gen_bullet(enemy.rect.center)
+            ebullet_sprites.add(gen_bullet)
+            all_sprites.add(gen_bullet)
+
+
+
 
         # ----- LOGIC
         all_sprites.update()
@@ -192,6 +213,7 @@ def main():
         # ----- UPDATE
         pygame.display.flip()
         clock.tick(60)
+        tick += 1
 
     pygame.quit()
 
