@@ -121,14 +121,12 @@ class Gen_bullet(pygame.sprite.Sprite):
         self.rect.center = coords
 
 
+
         self.velocity = 5
 
     def update(self):
         self.rect.y += self.velocity
-# Boss hp
-hp = 1000
-# Player lives
-lives = 3
+
 
 def main():
     pygame.init()
@@ -147,6 +145,13 @@ def main():
     enemy.rect.y = 50
     enemy.rect.x = 225
 
+    # Stat values
+
+    # Boss hp
+    hp = 1000
+    # Player lives
+    lives = 3
+
     all_sprites.add(enemy)
     enemy_sprites.add(enemy)
 
@@ -163,10 +168,29 @@ def main():
 
     # ----- MAIN LOOP
     while not done:
+        print(hp)
+        if hp > 800:
+            speed = 30
+        if hp < 799 and hp > 399:
+            speed = 20
+        if hp <= 400:
+            speed = 10
         # -- Event Handler
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 done = True
+
+        # Hit detection
+        # TODO: Code life and hit invinc system
+        for obstacle in ebullet_sprites:
+            if obstacle.rect.collidepoint(player.rect.center):
+                done = False
+        for pobstacle in bullet_sprites:
+            if pobstacle.rect.colliderect(enemy.rect):
+                hp -= 1
+                pobstacle.kill()
+
+
 
         # Movement
         keys = pygame.key.get_pressed()
@@ -187,14 +211,18 @@ def main():
 
         if hp > 0:
             for x in range(12):
-                bullet = Ebullet(enemy.rect.center, 30*x)
-                ebullet_sprites.add(bullet)
-                all_sprites.add(bullet)
+                if tick % speed == 0:
+                    bullet = Ebullet(enemy.rect.center, 30*x)
+                    ebullet_sprites.add(bullet)
+                    all_sprites.add(bullet)
+            if tick % speed == 0:
+                #TODO: Set bullet to have random location
+                gen_bullet = Gen_bullet(enemy.rect.center)
+                ebullet_sprites.add(gen_bullet)
+                all_sprites.add(gen_bullet)
 
-            gen_bullet = Gen_bullet(enemy.rect.center)
-            ebullet_sprites.add(gen_bullet)
-            all_sprites.add(gen_bullet)
 
+        # Bullet speed
 
 
 
@@ -213,6 +241,7 @@ def main():
         # ----- UPDATE
         pygame.display.flip()
         clock.tick(60)
+
         tick += 1
 
     pygame.quit()
