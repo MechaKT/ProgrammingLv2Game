@@ -336,10 +336,10 @@ def main():
         if game_over:
             write_text(f"Good luck next time! The boss was left with {hp} HP!",10, 300, 30)
             write_text(f"You also got {points} points!", 220,350,30)
-            write_text(f"Press Z to exit.", 20, 20, 30)
+            write_text(f"Press X to exit.", 20, 20, 30)
 
         keys = pygame.key.get_pressed()
-        if keys[pygame.K_z]:
+        if keys[pygame.K_x]:
             break
 
 
