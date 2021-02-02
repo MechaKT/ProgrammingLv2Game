@@ -21,7 +21,9 @@ ebullet_sprites = pygame.sprite.Group()
 tick = 0
 
 # Music files
-
+class Game():
+    def __init__(self):
+        self.endgame = False
 
 class Player(pygame.sprite.Sprite):
     def __init__(self):
@@ -169,13 +171,11 @@ def main():
     points = 0
     # Boss hp
     hp = 2000
-
     # Bomb
     bomb = 1
 
     all_sprites.add(enemy)
     enemy_sprites.add(enemy)
-
 
     player = Player()
     all_sprites.add(player)
@@ -185,8 +185,12 @@ def main():
     pbullet = Pbullet(player.rect.midtop)
     all_sprites.add(pbullet)
 
+    # Time variables
+
     tick = 0
     bullet_offset = 0
+
+    # Music and sounds
 
     music = './music/boss_theme.mp3'
     pygame.mixer.music.load(music)
@@ -194,9 +198,12 @@ def main():
     alert_sound = pygame.mixer.Sound('./music/Alert.wav')
     bullet_sound = pygame.mixer.Sound('./music/bullet.wav')
     bomb_sound = pygame.mixer.Sound('./music/thunder.wav')
+    win_sound = pygame.mixer.Sound('./music/Cheer.wav')
+
     alert_sound.set_volume(1)
     bullet_sound.set_volume(1)
     bomb_sound.set_volume(1)
+    win_sound.set_volume(1)
     warning = True
 
     bomb_on = False
@@ -225,19 +232,18 @@ def main():
             if event.type == pygame.QUIT:
                 done = True
 
-
         # Hit detection
         for obstacle in ebullet_sprites:
             if obstacle.rect.collidepoint(player.rect.center):
+                game_over = True
                 done = True
+
             elif obstacle.rect.colliderect(player.rect):
                 points += 1
         for pobstacle in bullet_sprites:
             if pobstacle.rect.colliderect(enemy.rect):
                 hp -= 1
                 pobstacle.kill()
-
-
 
         # Movement
         keys = pygame.key.get_pressed()
@@ -265,13 +271,11 @@ def main():
             bomb_on = True
             bomb_sound.play()
 
-
         if bomb_on:
             bomb_tick += 1
             if bomb_tick == 0.5 * 60:
                 bomb_on = False
                 bomb_tick = 0
-
 
         if hp > 0:
             for x in range(12):
@@ -286,7 +290,6 @@ def main():
             if tick % speed == 0:
                 bullet_offset += 6
 
-
             if tick % speed == 0:
 
                 gen_bullet = Gen_bullet((enemy.rect.centerx + random.randrange(-100, 100), enemy.rect.centery))
@@ -298,11 +301,7 @@ def main():
                         ebullet.kill()
         if hp <= 0:
             enemy.kill()
-
-
-        # Bullet speed
-
-
+            win_sound.play()
 
         # ----- LOGIC
         all_sprites.update()
@@ -320,16 +319,33 @@ def main():
         write_text(f"Points:{points}", 10, 10, 30)
         if hp <= 0:
             write_text("YOU WIN!!!", 200, 300, 80)
-        write_text(f"BOMB:{bomb}", 650, 10, 30)
+        write_text(f"Bomb:{bomb}", 650, 10, 30)
 
         # ----- UPDATE
         pygame.display.flip()
         clock.tick(60)
 
         tick += 1
+    endgame = True
+    while endgame:
+        pygame.init()
+        pygame.event.get()
+        pygame.display.flip()
+        screen.fill(BLACK)
+        clock.tick(60)
+        if game_over:
+            write_text(f"Good luck next time! The boss was left with {hp} HP!",10, 300, 30)
+            write_text(f"You also got {points} points!", 220,350,30)
+            write_text(f"Press Z to exit.", 20, 20, 30)
 
-    pygame.quit()
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_z]:
+            break
 
 
+# game.endgame = True
+# done = True
 if __name__ == "__main__":
+    game = Game()
     main()
+    pygame.quit()
