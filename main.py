@@ -19,6 +19,7 @@ ebullet_sprites = pygame.sprite.Group()
 
 # Calculates time between shots
 tick = 0
+death = False
 
 # Music files
 class Game():
@@ -50,14 +51,15 @@ class Player(pygame.sprite.Sprite):
         self.rect.y += self.y_vel
 
     def update(self):
-        if self.rect.top <= 0:
-            self.rect.top = 0
-        if self.rect.bottom >= HEIGHT:
-            self.rect.bottom = HEIGHT
-        if self.rect.right >= WIDTH:
-            self.rect.right = WIDTH
-        if self.rect.left <= 0:
-            self.rect.left = 0
+        if not death:
+            if self.rect.top <= 0:
+                self.rect.top = 0
+            if self.rect.bottom >= HEIGHT:
+                self.rect.bottom = HEIGHT
+            if self.rect.right >= WIDTH:
+                self.rect.right = WIDTH
+            if self.rect.left <= 0:
+                self.rect.left = 0
 
 
 class Enemy(pygame.sprite.Sprite):
@@ -173,6 +175,14 @@ def main():
     hp = 2000
     # Bomb
     bomb = 1
+    bomb_points = 150
+    # Lives
+    life = 3
+    # iframes
+    invincible = False
+    # death animation
+    death = False
+    set_location = False
 
     all_sprites.add(enemy)
     enemy_sprites.add(enemy)
@@ -189,6 +199,8 @@ def main():
 
     tick = 0
     bullet_offset = 0
+    invinc_tick = 0
+    bomb_tick = 0
 
     # Music and sounds
 
@@ -199,6 +211,8 @@ def main():
     bullet_sound = pygame.mixer.Sound('./music/bullet.wav')
     bomb_sound = pygame.mixer.Sound('./music/thunder.wav')
     win_sound = pygame.mixer.Sound('./music/Cheer.wav')
+    death_sound = pygame.mixer.Sound('./music/death.wav')
+    bomb_get_sound = pygame.mixer.Sound('./music/bomb.wav')
 
     alert_sound.set_volume(1)
     bullet_sound.set_volume(1)
@@ -207,7 +221,7 @@ def main():
     warning = True
 
     bomb_on = False
-    bomb_tick = 0
+
 
     # ----- MAIN LOOP
     while not done:
@@ -218,7 +232,7 @@ def main():
         if hp < 1400 and hp > 699:
             speed = 10
         if hp <=700:
-            speed = 7
+            speed = 8
             if warning:
                 alert_sound.play()
                 warning = False
@@ -232,14 +246,44 @@ def main():
             if event.type == pygame.QUIT:
                 done = True
 
+        # Regaining bombs
+        if points >= bomb_points:
+            bomb_get_sound.play()
+            bomb += 1
+            bomb_points += 150
+
         # Hit detection
         for obstacle in ebullet_sprites:
-            if obstacle.rect.collidepoint(player.rect.center):
-                game_over = True
-                done = True
+            if not invincible:
+                if obstacle.rect.collidepoint(player.rect.center):
+                    death_sound.play()
+                    life -= 1
+                    death = True
+                    set_location = False
+                    invincible = True
+                    if life < 1:
+                        game_over = True
+                        done = True
+            if not invincible:
+                if obstacle.rect.colliderect(player.rect):
+                    points += 1
 
-            elif obstacle.rect.colliderect(player.rect):
-                points += 1
+        if death:
+            if not set_location:
+                player.rect.x = 350
+                player.rect.y = 800
+                set_location = True
+            player.rect.y -= 4
+            if player.rect.y <= 600:
+                player.y_vel = 0
+                death = False
+
+        if invincible:
+            invinc_tick += 1
+            if invinc_tick == 2 * 60:
+                invincible = False
+                invinc_tick = 0
+
         for pobstacle in bullet_sprites:
             if pobstacle.rect.colliderect(enemy.rect):
                 hp -= 1
@@ -247,29 +291,31 @@ def main():
 
         # Movement
         keys = pygame.key.get_pressed()
-        if keys[pygame.K_LSHIFT]:
-            player.x_vel = player.y_vel = 3
-        if keys[pygame.K_LEFT]:
-            player.move_left()
-        if keys[pygame.K_RIGHT]:
-            player.move_right()
-        if keys[pygame.K_UP]:
-            player.move_up()
-        if keys[pygame.K_DOWN]:
-            player.move_down()
+        if not death:
+            if keys[pygame.K_LSHIFT]:
+                player.x_vel = player.y_vel = 3
+            if keys[pygame.K_LEFT]:
+                player.move_left()
+            if keys[pygame.K_RIGHT]:
+                player.move_right()
+            if keys[pygame.K_UP]:
+                player.move_up()
+            if keys[pygame.K_DOWN]:
+                player.move_down()
 
-        player.y_vel = player.x_vel = 5
+            player.y_vel = player.x_vel = 5
 
-        # Shoot
-        if keys[pygame.K_z]:
-            pbullet = Pbullet(player.rect.midtop)
-            all_sprites.add(pbullet)
-            bullet_sprites.add(pbullet)
+            # Shoot
+            if keys[pygame.K_z]:
+                pbullet = Pbullet(player.rect.midtop)
+                all_sprites.add(pbullet)
+                bullet_sprites.add(pbullet)
 
-        if keys[pygame.K_x] and bomb > 0:
-            bomb -= 1
-            bomb_on = True
-            bomb_sound.play()
+            if not bomb_on:
+                if keys[pygame.K_x] and bomb > 0:
+                    bomb -= 1
+                    bomb_on = True
+                    bomb_sound.play()
 
         if bomb_on:
             bomb_tick += 1
@@ -316,7 +362,8 @@ def main():
         all_sprites.draw(screen)
 
         write_text(f"HP:{hp}", 300, 10, 50)
-        write_text(f"Points:{points}", 10, 10, 30)
+        write_text(f"Points: {points}", 10, 10, 30)
+        write_text(f"Lives: {life}", 10, 50, 30)
         if hp <= 0:
             write_text("YOU WIN!!!", 200, 300, 80)
         write_text(f"Bomb:{bomb}", 650, 10, 30)
